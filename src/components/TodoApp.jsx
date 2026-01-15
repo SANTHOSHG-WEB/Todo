@@ -3,7 +3,7 @@ import axios from 'axios';
 import TodoInput from './TodoInput';
 import TodoItem from './TodoItem';
 
-const SPREADSHEET_ID = "1mwIZOsL1z-0eYWlr0TbnwR26zx-x279D-gLnRpWaYxA";
+const SPREADSHEET_ID = import.meta.env.VITE_GOOGLE_SPREADSHEET_ID || "1mwIZOsL1z-0eYWlr0TbnwR26zx-x279D-gLnRpWaYxA";
 const SHEET_NAME = 'Sheet1';
 
 export default function TodoApp({ token }) {
