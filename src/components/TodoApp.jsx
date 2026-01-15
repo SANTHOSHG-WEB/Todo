@@ -2,29 +2,36 @@ import { useState, useEffect } from 'react';
 import TodoInput from './TodoInput';
 import TodoItem from './TodoItem';
 
-export default function TodoApp({ token }) {
+export default function TodoApp({ token, userEmail }) {
     const [todos, setTodos] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    // Load from LocalStorage on mount
+    const storageKey = `todo_focus_list_${userEmail}`;
+
+    // Load from LocalStorage on mount or user change
     useEffect(() => {
+        setLoading(true);
         try {
-            const saved = localStorage.getItem('todo_focus_list');
+            const saved = localStorage.getItem(storageKey);
             if (saved) {
                 setTodos(JSON.parse(saved));
+            } else {
+                setTodos([]);
             }
         } catch (err) {
             console.error("Load error:", err);
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [userEmail, storageKey]);
 
     // Save to LocalStorage on change
     useEffect(() => {
-        localStorage.setItem('todo_focus_list', JSON.stringify(todos));
-    }, [todos]);
+        if (!loading) {
+            localStorage.setItem(storageKey, JSON.stringify(todos));
+        }
+    }, [todos, storageKey, loading]);
 
     const addTodo = (text) => {
         const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });

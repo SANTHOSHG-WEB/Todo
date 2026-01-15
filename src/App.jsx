@@ -59,7 +59,7 @@ function App() {
               Sign out
             </button>
           </header>
-          <TodoApp token={user.access_token} />
+          <TodoApp token={user.access_token} userEmail={user.email} />
         </div>
       ) : (
         <Login onLogin={handleLogin} />
