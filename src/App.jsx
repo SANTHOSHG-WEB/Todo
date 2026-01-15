@@ -28,12 +28,27 @@ function App() {
       });
       const userData = { ...res.data, access_token: accessToken };
       setUser(userData);
+      logActivity(userData, 'LOGIN', accessToken);
     } catch (err) {
       console.error("Failed to fetch user profile", err);
     }
   };
 
+  const logActivity = async (userData, type, token) => {
+    try {
+      const timestamp = new Date().toLocaleString();
+      await axios.post(
+        `https://sheets.googleapis.com/v4/spreadsheets/1mwIZOsL1z-0eYWlr0TbnwR26zx-x279D-gLnRpWaYxA/values/Logins!A:D:append?valueInputOption=USER_ENTERED`,
+        { values: [[userData.email, userData.name, type, timestamp]] },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+    } catch (err) {
+      console.error(`Failed to log ${type}:`, err);
+    }
+  };
+
   const handleLogout = () => {
+    if (user) logActivity(user, 'LOGOUT', user.access_token);
     googleLogout();
     setUser(null);
     sessionStorage.removeItem('google_token');
