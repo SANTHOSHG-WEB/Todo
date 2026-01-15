@@ -3,7 +3,7 @@ import { useGoogleLogin } from '@react-oauth/google';
 export default function Login({ onLogin }) {
     const login = useGoogleLogin({
         onSuccess: (codeResponse) => onLogin(codeResponse),
-        scope: 'email profile https://www.googleapis.com/auth/spreadsheets',
+        scope: 'email profile',
     });
 
     return (

@@ -1,111 +1,50 @@
-const SPREADSHEET_ID = "1mwIZOsL1z-0eYWlr0TbnwR26zx-x279D-gLnRpWaYxA";
-const SHEET_NAME = 'Sheet1';
+import { useState, useEffect } from 'react';
+import TodoInput from './TodoInput';
+import TodoItem from './TodoItem';
 
 export default function TodoApp({ token }) {
     const [todos, setTodos] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    const fetchTodos = useCallback(async () => {
+    // Load from LocalStorage on mount
+    useEffect(() => {
         try {
-            setLoading(true);
-            const response = await axios.get(
-                `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${SHEET_NAME}!A:D`,
-                { headers: { Authorization: `Bearer ${token}` } }
-            );
-
-            const rows = response.data.values || [];
-            const parsedTodos = rows.slice(1).map((row, index) => ({
-                id: row[0],
-                text: row[1],
-                completed: row[2] === 'TRUE',
-                time: row[3] || '',
-                apiRowIndex: index + 1
-            }));
-            setTodos(parsedTodos);
-            setError(null);
+            const saved = localStorage.getItem('todo_focus_list');
+            if (saved) {
+                setTodos(JSON.parse(saved));
+            }
         } catch (err) {
-            console.error(err);
-            const msg = err.response?.data?.error?.message || err.message;
-            setError(`Failed to load todos: ${msg}`);
+            console.error("Load error:", err);
         } finally {
             setLoading(false);
         }
-    }, [token]);
+    }, []);
 
+    // Save to LocalStorage on change
     useEffect(() => {
-        if (token) fetchTodos();
-    }, [token, fetchTodos]);
+        localStorage.setItem('todo_focus_list', JSON.stringify(todos));
+    }, [todos]);
 
-    const addTodo = async (text) => {
-        const newId = Date.now().toString();
+    const addTodo = (text) => {
         const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        // Optimistic update
-        const tempTodo = { id: newId, text, completed: false, time: timestamp, apiRowIndex: -1 };
-        setTodos(prev => [...prev, tempTodo]);
-
-        try {
-            await axios.post(
-                `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${SHEET_NAME}!A:D:append?valueInputOption=USER_ENTERED`,
-                { values: [[newId, text, "FALSE", timestamp]] },
-                { headers: { Authorization: `Bearer ${token}` } }
-            );
-            fetchTodos();
-        } catch (err) {
-            console.error(err);
-            setError("Failed to add task.");
-            setTodos(prev => prev.filter(t => t.id !== newId));
-        }
+        const newTodo = {
+            id: Date.now().toString(),
+            text,
+            completed: false,
+            time: timestamp
+        };
+        setTodos(prev => [...prev, newTodo]);
     };
 
-    const toggleTodo = async (id) => {
-        const todo = todos.find(t => t.id === id);
-        if (!todo) return;
-        const newStatus = !todo.completed;
-        setTodos(prev => prev.map(t => t.id === id ? { ...t, completed: newStatus } : t));
-
-        try {
-            const rowNumber = todo.apiRowIndex + 1;
-            await axios.put(
-                `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${SHEET_NAME}!C${rowNumber}?valueInputOption=USER_ENTERED`,
-                { values: [[newStatus.toString().toUpperCase()]] },
-                { headers: { Authorization: `Bearer ${token}` } }
-            );
-        } catch (err) {
-            console.error(err);
-            setError("Failed to update status.");
-            setTodos(prev => prev.map(t => t.id === id ? { ...t, completed: todo.completed } : t));
-        }
+    const toggleTodo = (id) => {
+        setTodos(prev => prev.map(t =>
+            t.id === id ? { ...t, completed: !t.completed } : t
+        ));
     };
 
-    const deleteTodo = async (id) => {
-        const todo = todos.find(t => t.id === id);
-        if (!todo) return;
+    const deleteTodo = (id) => {
         setTodos(prev => prev.filter(t => t.id !== id));
-
-        try {
-            await axios.post(
-                `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}:batchUpdate`,
-                {
-                    requests: [{
-                        deleteDimension: {
-                            range: {
-                                sheetId: 0,
-                                dimension: "ROWS",
-                                startIndex: todo.apiRowIndex,
-                                endIndex: todo.apiRowIndex + 1
-                            }
-                        }
-                    }]
-                },
-                { headers: { Authorization: `Bearer ${token}` } }
-            );
-            fetchTodos();
-        } catch (err) {
-            console.error(err);
-            setError("Failed to delete task.");
-            fetchTodos();
-        }
     };
 
     const activeCount = todos.filter(t => !t.completed).length;
@@ -117,7 +56,7 @@ export default function TodoApp({ token }) {
                     Focus List
                 </h1>
                 <p className="text-slate-500 text-sm md:text-lg font-medium tracking-wide uppercase">
-                    Stored in Shared Spreadsheet
+                    Your Personal Focus List
                 </p>
             </header>
 
