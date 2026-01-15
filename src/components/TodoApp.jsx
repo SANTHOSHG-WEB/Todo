@@ -15,17 +15,17 @@ export default function TodoApp({ token }) {
         try {
             setLoading(true);
             const response = await axios.get(
-                `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${SHEET_NAME}!A:C`,
+                `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${SHEET_NAME}!A:D`,
                 { headers: { Authorization: `Bearer ${token}` } }
             );
 
             const rows = response.data.values || [];
-            // Assume Row 1 is header. Data starts row 2.
-            // Map rows: [ID, Text, Completed]
+            // Map rows: [ID, Text, Completed, Time]
             const parsedTodos = rows.slice(1).map((row, index) => ({
                 id: row[0],
                 text: row[1],
                 completed: row[2] === 'TRUE',
+                time: row[3] || '',
                 apiRowIndex: index + 1
             }));
             setTodos(parsedTodos);
@@ -45,14 +45,15 @@ export default function TodoApp({ token }) {
 
     const addTodo = async (text) => {
         const newId = Date.now().toString();
+        const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         // Optimistic update
-        const tempTodo = { id: newId, text, completed: false, apiRowIndex: -1 };
+        const tempTodo = { id: newId, text, completed: false, time: timestamp, apiRowIndex: -1 };
         setTodos(prev => [...prev, tempTodo]);
 
         try {
             await axios.post(
-                `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${SHEET_NAME}!A:C:append?valueInputOption=USER_ENTERED`,
-                { values: [[newId, text, "FALSE"]] },
+                `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${SHEET_NAME}!A:D:append?valueInputOption=USER_ENTERED`,
+                { values: [[newId, text, "FALSE", timestamp]] },
                 { headers: { Authorization: `Bearer ${token}` } }
             );
             // Refetch to get correct row indices

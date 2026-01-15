@@ -1,15 +1,15 @@
 export default function TodoItem({ todo, onToggle, onDelete }) {
     return (
         <div className={`group flex items-center justify-between p-4 mb-3 rounded-xl border transition-all duration-300 ${todo.completed
-                ? 'bg-slate-900/40 border-slate-800/50 opacity-60'
-                : 'bg-slate-800 border-slate-700 hover:border-indigo-500/30 hover:shadow-lg hover:shadow-black/20 hover:-translate-y-0.5'
+            ? 'bg-slate-900/40 border-slate-800/50 opacity-60'
+            : 'bg-slate-800 border-slate-700 hover:border-indigo-500/30 hover:shadow-lg hover:shadow-black/20 hover:-translate-y-0.5'
             }`}>
             <div className="flex items-center gap-4 flex-1 overflow-hidden">
                 <button
                     onClick={() => onToggle(todo.id)}
                     className={`flex-shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-200 ${todo.completed
-                            ? 'bg-gradient-to-br from-indigo-500 to-purple-500 border-transparent shadow-sm'
-                            : 'border-slate-500 hover:border-indigo-400 bg-transparent'
+                        ? 'bg-gradient-to-br from-indigo-500 to-purple-500 border-transparent shadow-sm'
+                        : 'border-slate-500 hover:border-indigo-400 bg-transparent'
                         }`}
                 >
                     {todo.completed && (
@@ -18,12 +18,17 @@ export default function TodoItem({ todo, onToggle, onDelete }) {
                         </svg>
                     )}
                 </button>
-                <span className={`text-lg truncate transition-all duration-300 select-none cursor-pointer ${todo.completed
+                <div className="flex flex-col">
+                    <span className={`text-lg transition-all duration-300 select-none cursor-pointer ${todo.completed
                         ? 'line-through text-slate-500'
                         : 'text-slate-200'
-                    }`} onClick={() => onToggle(todo.id)}>
-                    {todo.text}
-                </span>
+                        }`} onClick={() => onToggle(todo.id)}>
+                        {todo.text}
+                    </span>
+                    {todo.time && (
+                        <span className="text-xs text-slate-500 font-medium">{todo.time}</span>
+                    )}
+                </div>
             </div>
             <button
                 onClick={() => onDelete(todo.id)}
