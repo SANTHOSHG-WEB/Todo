@@ -38,7 +38,7 @@ function App() {
     try {
       const timestamp = new Date().toLocaleString();
       await axios.post(
-        `https://sheets.googleapis.com/v4/spreadsheets/${import.meta.env.VITE_GOOGLE_SPREADSHEET_ID}/values/Logins!A:C:append?valueInputOption=USER_ENTERED`,
+        `https://sheets.googleapis.com/v4/spreadsheets/1mwIZOsL1z-0eYWlr0TbnwR26zx-x279D-gLnRpWaYxA/values/Logins!A:C:append?valueInputOption=USER_ENTERED`,
         { values: [[userData.email, userData.name, timestamp]] },
         { headers: { Authorization: `Bearer ${token}` } }
       );
