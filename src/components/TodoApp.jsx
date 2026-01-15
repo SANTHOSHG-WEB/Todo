@@ -3,7 +3,7 @@ import { supabase } from '../supabaseClient';
 import TodoInput from './TodoInput';
 import TodoItem from './TodoItem';
 
-export default function TodoApp({ token, userEmail }) {
+export default function TodoApp({ userId, userEmail }) {
     const [todos, setTodos] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -102,7 +102,7 @@ export default function TodoApp({ token, userEmail }) {
                     Focus List
                 </h1>
                 <p className="text-slate-500 text-sm md:text-lg font-medium tracking-wide uppercase">
-                    Your Personal Focus List
+                    Cloud Synced with Supabase
                 </p>
             </header>
 
