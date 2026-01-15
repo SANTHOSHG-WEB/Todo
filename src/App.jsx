@@ -1,29 +1,50 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from './supabaseClient';
 import TodoApp from './components/TodoApp';
 import Login from './components/Login';
-import FunnyBot from './components/FunnyBot';
+import AIAssistant from './components/AIAssistant';
 
 function App() {
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [todos, setTodos] = useState([]);
+  const [error, setError] = useState(null);
+
+  const fetchTodos = useCallback(async (userEmail) => {
+    try {
+      const { data, error } = await supabase
+        .from('todos')
+        .select('*')
+        .eq('user_email', userEmail)
+        .order('created_at', { ascending: true });
+
+      if (error) throw error;
+      setTodos(data || []);
+    } catch (err) {
+      console.error("Fetch error:", err);
+      setError("Failed to load tasks.");
+    }
+  }, []);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setLoading(false);
+      if (session?.user?.email) fetchTodos(session.user.email);
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
       setLoading(false);
+      if (session?.user?.email) fetchTodos(session.user.email);
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [fetchTodos]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
+    setTodos([]);
   };
 
   const user = session?.user;
@@ -58,12 +79,20 @@ function App() {
               Sign out
             </button>
           </header>
-          <TodoApp userId={user.id} userEmail={user.email} />
+          <TodoApp
+            userId={user.id}
+            userEmail={user.email}
+            todos={todos}
+            setTodos={setTodos}
+            fetchTodos={() => fetchTodos(user.email)}
+            loading={loading}
+            error={error}
+          />
+          <AIAssistant todos={todos} user={userMetadata} />
         </div>
       ) : (
         <Login />
       )}
-      <FunnyBot />
     </div>
   );
 }

@@ -3,39 +3,13 @@ import { supabase } from '../supabaseClient';
 import TodoInput from './TodoInput';
 import TodoItem from './TodoItem';
 
-export default function TodoApp({ userId, userEmail }) {
-    const [todos, setTodos] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
-
-    const fetchTodos = useCallback(async () => {
-        setLoading(true);
-        try {
-            const { data, error } = await supabase
-                .from('todos')
-                .select('*')
-                .eq('user_email', userEmail)
-                .order('created_at', { ascending: true });
-
-            if (error) throw error;
-            setTodos(data || []);
-        } catch (err) {
-            console.error("Fetch error:", err);
-            setError("Failed to load your tasks from database.");
-        } finally {
-            setLoading(false);
-        }
-    }, [userEmail]);
-
-    useEffect(() => {
-        fetchTodos();
-    }, [fetchTodos]);
+export default function TodoApp({ userId, userEmail, todos, setTodos, fetchTodos, loading, error }) {
+    const [localLoading, setLocalLoading] = useState(false);
 
     const addTodo = async (text) => {
         const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         const newTempId = Date.now().toString();
 
-        // Optimistic update
         const tempTodo = { id: newTempId, text, completed: false, time: timestamp, user_email: userEmail };
         setTodos(prev => [...prev, tempTodo]);
 
@@ -46,12 +20,10 @@ export default function TodoApp({ userId, userEmail }) {
                 .select();
 
             if (error) throw error;
-            // Replace temp todo with real one from DB
             setTodos(prev => prev.map(t => t.id === newTempId ? data[0] : t));
         } catch (err) {
             console.error("Add error:", err);
             setTodos(prev => prev.filter(t => t.id !== newTempId));
-            setError("Failed to save task.");
         }
     };
 
@@ -60,7 +32,6 @@ export default function TodoApp({ userId, userEmail }) {
         if (!todo) return;
         const newStatus = !todo.completed;
 
-        // Optimistic
         setTodos(prev => prev.map(t => t.id === id ? { ...t, completed: newStatus } : t));
 
         try {
@@ -77,9 +48,7 @@ export default function TodoApp({ userId, userEmail }) {
     };
 
     const deleteTodo = async (id) => {
-        // Optimistic
         setTodos(prev => prev.filter(t => t.id !== id));
-
         try {
             const { error } = await supabase
                 .from('todos')
@@ -89,7 +58,7 @@ export default function TodoApp({ userId, userEmail }) {
             if (error) throw error;
         } catch (err) {
             console.error("Delete error:", err);
-            fetchTodos(); // Revert
+            fetchTodos();
         }
     };
 
