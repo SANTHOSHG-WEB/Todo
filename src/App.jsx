@@ -1,55 +1,43 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
-import { googleLogout } from '@react-oauth/google';
+import { supabase } from './supabaseClient';
 import TodoApp from './components/TodoApp';
 import Login from './components/Login';
 import FunnyBot from './components/FunnyBot';
 
 function App() {
-  const [user, setUser] = useState(null);
+  const [session, setSession] = useState(null);
 
   useEffect(() => {
-    const savedToken = sessionStorage.getItem('google_token');
-    if (savedToken) {
-      const tokenData = JSON.parse(savedToken);
-      fetchUserProfile(tokenData.access_token);
-    }
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
-  const handleLogin = (response) => {
-    sessionStorage.setItem('google_token', JSON.stringify(response));
-    fetchUserProfile(response.access_token);
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
   };
 
-  const fetchUserProfile = async (accessToken) => {
-    try {
-      const res = await axios.get('https://www.googleapis.com/oauth2/v1/userinfo?alt=json', {
-        headers: { Authorization: `Bearer ${accessToken}` }
-      });
-      setUser({ ...res.data, access_token: accessToken });
-    } catch (err) {
-      console.error("Failed to fetch user profile", err);
-    }
-  };
-
-  const handleLogout = () => {
-    googleLogout();
-    setUser(null);
-    sessionStorage.removeItem('google_token');
-  };
+  const user = session?.user;
+  const userMetadata = user?.user_metadata;
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 selection:bg-indigo-500/30 overflow-x-hidden relative">
       <div className="fixed inset-0 bg-[radial-gradient(circle_at_top,_var(--tw-gradient-stops))] from-indigo-900/20 via-slate-950 to-slate-950 -z-10"></div>
       <div className="fixed inset-0 bg-[radial-gradient(ellipse_at_bottom_right,_var(--tw-gradient-stops))] from-purple-900/10 via-slate-950 to-slate-950 -z-10"></div>
 
-      {user ? (
+      {session ? (
         <div className="relative pt-20 md:pt-0">
           <header className="absolute top-4 left-4 right-4 md:top-8 md:right-8 md:left-auto flex items-center justify-between md:justify-end gap-4 z-50">
-            {user.picture && (
+            {userMetadata?.avatar_url && (
               <div className="flex items-center gap-3 bg-slate-800/50 backdrop-blur-md p-1.5 pl-3 rounded-full border border-slate-700/50">
-                <span className="text-xs md:text-sm font-medium text-slate-200 hidden sm:block">{user.name}</span>
-                <img src={user.picture} alt="Profile" className="w-7 h-7 md:w-8 md:h-8 rounded-full border border-slate-600" />
+                <span className="text-xs md:text-sm font-medium text-slate-200 hidden sm:block">{userMetadata.full_name}</span>
+                <img src={userMetadata.avatar_url} alt="Profile" className="w-7 h-7 md:w-8 md:h-8 rounded-full border border-slate-600" />
               </div>
             )}
             <button
@@ -59,10 +47,10 @@ function App() {
               Sign out
             </button>
           </header>
-          <TodoApp token={user.access_token} userEmail={user.email} />
+          <TodoApp userId={user.id} userEmail={user.email} />
         </div>
       ) : (
-        <Login onLogin={handleLogin} />
+        <Login />
       )}
       <FunnyBot />
     </div>
