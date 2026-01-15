@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { supabase } from '../supabaseClient';
 import TodoInput from './TodoInput';
 import TodoItem from './TodoItem';
 
@@ -7,51 +8,89 @@ export default function TodoApp({ token, userEmail }) {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    const storageKey = `todo_focus_list_${userEmail}`;
-
-    // Load from LocalStorage on mount or user change
-    useEffect(() => {
+    const fetchTodos = useCallback(async () => {
         setLoading(true);
         try {
-            const saved = localStorage.getItem(storageKey);
-            if (saved) {
-                setTodos(JSON.parse(saved));
-            } else {
-                setTodos([]);
-            }
+            const { data, error } = await supabase
+                .from('todos')
+                .select('*')
+                .eq('user_email', userEmail)
+                .order('created_at', { ascending: true });
+
+            if (error) throw error;
+            setTodos(data || []);
         } catch (err) {
-            console.error("Load error:", err);
+            console.error("Fetch error:", err);
+            setError("Failed to load your tasks from database.");
         } finally {
             setLoading(false);
         }
-    }, [userEmail, storageKey]);
+    }, [userEmail]);
 
-    // Save to LocalStorage on change
     useEffect(() => {
-        if (!loading) {
-            localStorage.setItem(storageKey, JSON.stringify(todos));
-        }
-    }, [todos, storageKey, loading]);
+        fetchTodos();
+    }, [fetchTodos]);
 
-    const addTodo = (text) => {
+    const addTodo = async (text) => {
         const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        const newTodo = {
-            id: Date.now().toString(),
-            text,
-            completed: false,
-            time: timestamp
-        };
-        setTodos(prev => [...prev, newTodo]);
+        const newTempId = Date.now().toString();
+
+        // Optimistic update
+        const tempTodo = { id: newTempId, text, completed: false, time: timestamp, user_email: userEmail };
+        setTodos(prev => [...prev, tempTodo]);
+
+        try {
+            const { data, error } = await supabase
+                .from('todos')
+                .insert([{ text, completed: false, time: timestamp, user_email: userEmail }])
+                .select();
+
+            if (error) throw error;
+            // Replace temp todo with real one from DB
+            setTodos(prev => prev.map(t => t.id === newTempId ? data[0] : t));
+        } catch (err) {
+            console.error("Add error:", err);
+            setTodos(prev => prev.filter(t => t.id !== newTempId));
+            setError("Failed to save task.");
+        }
     };
 
-    const toggleTodo = (id) => {
-        setTodos(prev => prev.map(t =>
-            t.id === id ? { ...t, completed: !t.completed } : t
-        ));
+    const toggleTodo = async (id) => {
+        const todo = todos.find(t => t.id === id);
+        if (!todo) return;
+        const newStatus = !todo.completed;
+
+        // Optimistic
+        setTodos(prev => prev.map(t => t.id === id ? { ...t, completed: newStatus } : t));
+
+        try {
+            const { error } = await supabase
+                .from('todos')
+                .update({ completed: newStatus })
+                .eq('id', id);
+
+            if (error) throw error;
+        } catch (err) {
+            console.error("Update error:", err);
+            setTodos(prev => prev.map(t => t.id === id ? { ...t, completed: todo.completed } : t));
+        }
     };
 
-    const deleteTodo = (id) => {
+    const deleteTodo = async (id) => {
+        // Optimistic
         setTodos(prev => prev.filter(t => t.id !== id));
+
+        try {
+            const { error } = await supabase
+                .from('todos')
+                .delete()
+                .eq('id', id);
+
+            if (error) throw error;
+        } catch (err) {
+            console.error("Delete error:", err);
+            fetchTodos(); // Revert
+        }
     };
 
     const activeCount = todos.filter(t => !t.completed).length;
