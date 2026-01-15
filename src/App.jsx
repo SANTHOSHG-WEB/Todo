@@ -28,23 +28,8 @@ function App() {
       });
       const userData = { ...res.data, access_token: accessToken };
       setUser(userData);
-      logUserLogin(userData, accessToken);
     } catch (err) {
       console.error("Failed to fetch user profile", err);
-    }
-  };
-
-  const logUserLogin = async (userData, token) => {
-    try {
-      const timestamp = new Date().toLocaleString();
-      await axios.post(
-        `https://sheets.googleapis.com/v4/spreadsheets/${import.meta.env.VITE_GOOGLE_SPREADSHEET_ID}/values/Logins!A:C:append?valueInputOption=USER_ENTERED`,
-        { values: [[userData.email, userData.name, timestamp]] },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      console.log("User login logged to Sheet.");
-    } catch (err) {
-      console.error("Failed to log login:", err);
     }
   };
 
