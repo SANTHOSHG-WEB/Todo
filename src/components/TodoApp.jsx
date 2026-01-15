@@ -52,13 +52,13 @@ export default function TodoApp({ token }) {
     const activeCount = todos.filter(t => !t.completed).length;
 
     return (
-        <div className="max-w-2xl mx-auto p-6 md:p-12 relative z-10">
-            <header className="mb-10 text-center">
-                <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-indigo-400 via-purple-400 to-indigo-400 bg-clip-text text-transparent mb-3 animate-gradient-x">
+        <div className="max-w-2xl mx-auto p-4 md:p-12 relative z-10">
+            <header className="mb-8 md:mb-10 text-center">
+                <h1 className="text-4xl md:text-6xl font-extrabold bg-gradient-to-r from-indigo-400 via-purple-400 to-indigo-400 bg-clip-text text-transparent mb-3 animate-gradient-x tracking-tight">
                     Focus List
                 </h1>
-                <p className="text-slate-400 text-lg">
-                    Synced with Google Sheets
+                <p className="text-slate-500 text-sm md:text-lg font-medium tracking-wide uppercase">
+                    Your Private Tasks
                 </p>
             </header>
 

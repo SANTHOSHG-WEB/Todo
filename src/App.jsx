@@ -45,21 +45,21 @@ function App() {
       <div className="fixed inset-0 bg-[radial-gradient(ellipse_at_bottom_right,_var(--tw-gradient-stops))] from-purple-900/10 via-slate-950 to-slate-950 -z-10"></div>
 
       {user ? (
-        <div className="relative">
-          <div className="absolute top-4 right-4 md:top-8 md:right-8 flex items-center gap-4 z-50">
+        <div className="relative pt-20 md:pt-0">
+          <header className="absolute top-4 left-4 right-4 md:top-8 md:right-8 md:left-auto flex items-center justify-between md:justify-end gap-4 z-50">
             {user.picture && (
-              <div className="flex items-center gap-3 bg-slate-800/50 backdrop-blur-md p-2 pl-4 rounded-full border border-slate-700/50">
-                <span className="text-sm font-medium text-slate-200 hidden md:block">{user.name}</span>
-                <img src={user.picture} alt="Profile" className="w-8 h-8 rounded-full border border-slate-600" />
+              <div className="flex items-center gap-3 bg-slate-800/50 backdrop-blur-md p-1.5 pl-3 rounded-full border border-slate-700/50">
+                <span className="text-xs md:text-sm font-medium text-slate-200 hidden sm:block">{user.name}</span>
+                <img src={user.picture} alt="Profile" className="w-7 h-7 md:w-8 md:h-8 rounded-full border border-slate-600" />
               </div>
             )}
             <button
               onClick={handleLogout}
-              className="text-sm text-slate-500 hover:text-white transition-colors bg-slate-800/50 px-4 py-2 rounded-full border border-slate-700/50 hover:bg-slate-700/50"
+              className="text-xs md:text-sm text-slate-400 hover:text-white transition-colors bg-slate-800/50 px-4 py-2 rounded-full border border-slate-700/50 hover:bg-slate-700/50"
             >
               Sign out
             </button>
-          </div>
+          </header>
           <TodoApp token={user.access_token} />
         </div>
       ) : (

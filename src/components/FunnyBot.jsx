@@ -47,9 +47,9 @@ export default function FunnyBot() {
     };
 
     return (
-        <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end">
+        <div className="fixed bottom-4 right-4 md:bottom-6 md:right-6 z-50 flex flex-col items-end max-w-[calc(100vw-2rem)]">
             {isOpen && (
-                <div className="mb-4 w-80 h-96 bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom-5 fade-in duration-300">
+                <div className="mb-4 w-72 sm:w-80 h-[28rem] max-h-[70vh] bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom-5 fade-in duration-300">
                     <div className="bg-indigo-600 p-4 flex justify-between items-center">
                         <span className="font-bold text-white">Sarcastic Bot 🤖</span>
                         <button onClick={() => setIsOpen(false)} className="text-white/80 hover:text-white">
@@ -63,8 +63,8 @@ export default function FunnyBot() {
                         {messages.map((msg, idx) => (
                             <div key={idx} className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
                                 <div className={`max-w-[80%] rounded-xl px-4 py-2 text-sm ${msg.sender === 'user'
-                                        ? 'bg-indigo-600 text-white rounded-br-none'
-                                        : 'bg-slate-700 text-slate-200 rounded-bl-none border border-slate-600'
+                                    ? 'bg-indigo-600 text-white rounded-br-none'
+                                    : 'bg-slate-700 text-slate-200 rounded-bl-none border border-slate-600'
                                     }`}>
                                     {msg.text}
                                 </div>
